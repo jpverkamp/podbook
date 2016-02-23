@@ -6,6 +6,8 @@ import os
 import sys
 import yaml
 
+DEBUG_MODE = '--debug' in sys.argv or os.environ.get('DEBUG', False)
+
 app = flask.Flask(__name__)
 
 @app.route('/')
@@ -75,4 +77,4 @@ def get_feed(feed):
     return fg.rss_str(pretty = True)
 
 if __name__ == '__main__':
-    app.run(host = '0.0.0.0', debug = '--debug' in sys.argv)
+    app.run(host = '0.0.0.0', debug = DEBUG_MODE)

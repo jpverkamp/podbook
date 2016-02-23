@@ -1,5 +1,6 @@
 server:
     build: server
+    # environment: {DEBUG: True}
     ports:
         - 5000
     volumes:
