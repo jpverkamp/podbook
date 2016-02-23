@@ -74,16 +74,5 @@ def get_feed(feed):
 
     return fg.rss_str(pretty = True)
 
-@app.route('/feed/<feed>/<file>')
-def get_file(feed, file):
-    path = os.path.join('books', feed, file)
-
-    with open(path, 'rb') as fin:
-        pass
-
-    return path
-
-
-
 if __name__ == '__main__':
     app.run(host = '0.0.0.0', debug = '--debug' in sys.argv)
