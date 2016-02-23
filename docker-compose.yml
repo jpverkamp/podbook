@@ -1,0 +1,16 @@
+server:
+    build: server
+    ports:
+        - 5000
+    volumes:
+        - ./books:/app/books
+
+nginx:
+    image: nginx
+    links:
+        - server
+    ports:
+        - 80:80
+    volumes:
+        - ./books:/var/www/feed/
+        - ./nginx:/etc/nginx/conf.d/

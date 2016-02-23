@@ -1,0 +1,10 @@
+# Python
+*.pyc
+__pycache__
+
+# Datafiles
+books
+!books/.keep
+
+# OSX
+.DS_Store
