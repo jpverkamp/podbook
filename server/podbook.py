@@ -12,7 +12,7 @@ app = flask.Flask(__name__)
 def index():
     result = '<ul>'
 
-    for path in os.listdir('books'):
+    for path in sorted(os.listdir('books')):
         config_path = os.path.join('books', path, 'book.yml')
         print(config_path)
 
@@ -53,7 +53,7 @@ def get_feed(feed):
 
     fg.podcast.itunes_category('Arts')
 
-    for file in os.listdir(os.path.join('books', feed)):
+    for file in sorted(os.listdir(os.path.join('books', feed))):
         if not file.endswith('.mp3'):
             continue
 
