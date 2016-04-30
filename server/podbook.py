@@ -62,6 +62,7 @@ def get_feed(feed):
         name = file.rsplit('.', 1)[0]
 
         feed_entry_link = host_url + '/feed/{feed}/{file}'.format(feed = feed, file = file)
+        feed_entry_link = feed_entry_link.replace(' ', '%20')
 
         fe = fg.add_entry()
 
