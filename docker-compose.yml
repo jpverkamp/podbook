@@ -1,6 +1,7 @@
 server:
     build: server
-    # environment: {DEBUG: True}
+    env_file:
+        - ./podbook.env
     ports:
         - 5000
     volumes:
@@ -13,5 +14,5 @@ nginx:
     ports:
         - 80:80
     volumes:
-        - ./books:/var/www/feed/
+        - ./books:/var/www/media/
         - ./nginx:/etc/nginx/conf.d/
