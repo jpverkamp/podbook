@@ -34,10 +34,28 @@ def requires_auth(f):
         return f(*args, **kwargs)
     return decorated
 
-def book_to_uuid(book):
+def list_books():
+    '''List all known books as (author, title) tuples.'''
+
+    for author in os.listdir('books'):
+        author_path = os.path.join('books', author)
+        if not os.path.isdir(author_path):
+            continue
+
+        for title in os.listdir(author_path):
+            book_path = os.path.join(author_path, title)
+            if not os.path.isdir(book_path):
+                continue
+
+            if not any(file.endswith('.mp3') for file in os.listdir(book_path)):
+                continue
+
+            yield(author, title)
+
+def book_to_uuid(author, title):
     '''Translate a book folder into a deterministic UUID.'''
 
-    return uuid.uuid5(UUID_NAMESPACE, book)
+    return uuid.uuid5(UUID_NAMESPACE, author + title)
 
 def uuid_to_book(id, cache = {}):
     '''Translate a UUID from above back into a book folder.'''
@@ -47,8 +65,8 @@ def uuid_to_book(id, cache = {}):
 
     if not id in cache:
         cache.clear()
-        for book in os.listdir('books'):
-            cache[book_to_uuid(book)] = book
+        for author, title in list_books():
+            cache[book_to_uuid(author, title)] = (author, title)
 
     if not id in cache:
         raise Exception('{} does not match any known book'.format(id))
@@ -59,54 +77,50 @@ def uuid_to_book(id, cache = {}):
 @requires_auth
 def index():
     result = '<ul>'
+    previous_author = None
 
-    for book in sorted(os.listdir('books')):
-        config_path = os.path.join('books', book, 'book.yml')
-        if not os.path.exists(config_path):
-            continue
+    for author, title in list_books():
+        if author != previous_author:
+            if previous_author != None:
+                result += '</ul></li>'
 
-        with open(config_path, 'r') as fin:
-            config = yaml.load(fin)
+            result += '<li>{author}<ul>'.format(author = author)
+            previous_author = author
 
-        result += '<li><a href="feed/{uuid}.xml">{title} by {author}</a></li>'.format(
-            uuid = book_to_uuid(book),
-            title = config['title'],
-            author = config['author']
+
+        result += '<li><a href="feed/{uuid}.xml">{title}</a></li>'.format(
+            uuid = book_to_uuid(author, title),
+            title = title,
         )
 
-    result += '</ul>'
+    result += '</ul></li></ul>'
     return result
 
 @app.route('/feed/<uuid>.xml')
 def get_feed(uuid):
-    book = uuid_to_book(uuid)
-    config_path = os.path.join('books', book, 'book.yml')
-
-    with open(config_path, 'r') as fin:
-        config = yaml.load(fin)
+    author, title = uuid_to_book(uuid)
 
     fg = feedgen.feed.FeedGenerator()
     fg.load_extension('podcast')
 
     host_url = flask.request.scheme + '://' + flask.request.host
-
     feed_link = host_url + '/feed/{uuid}.xml'.format(uuid = uuid)
 
     fg.id = feed_link
-    fg.title(config['title'])
-    fg.description('{title} by {author}'.format(title = config['title'], author = config['author']))
-    fg.author(name = config['author'])
+    fg.title(title)
+    fg.description('{title} by {author}'.format(title = title, author = author))
+    fg.author(name = author)
     fg.link(href = feed_link, rel = 'alternate')
 
     fg.podcast.itunes_category('Arts')
 
-    for file in sorted(os.listdir(os.path.join('books', book))):
+    for file in sorted(os.listdir(os.path.join('books', author, title))):
         if not file.endswith('.mp3'):
             continue
 
         name = file.rsplit('.', 1)[0]
 
-        feed_entry_link = host_url + '/media/{book}/{file}'.format(book = book, file = file)
+        feed_entry_link = host_url + '/media/{author}/{title}/{file}'.format(author = author, title = title, file = file)
         feed_entry_link = feed_entry_link.replace(' ', '%20')
 
         fe = fg.add_entry()
@@ -114,8 +128,8 @@ def get_feed(uuid):
         fe.id(feed_entry_link)
         fe.title(name)
         fe.description('{title} by {author} - {chapter}'.format(
-            title = config['title'],
-            author = config['author'],
+            title = title,
+            author = author,
             chapter = name,
         ))
         fe.enclosure(feed_entry_link, 0, 'audio/mpeg')
