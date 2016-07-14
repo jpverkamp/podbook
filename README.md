@@ -2,9 +2,8 @@
 Generate podcasts from audiobooks
 
 Expected directory structure:
-- `./books/book.yml`
-- `./books/*.mp3`
+- `./books/{author}/{book}/*.mp3`
 
-`book.yml` should contain at least `title` and `author` (for now). 
+The author's and book's title will be used for the podcast metadata.
 
 mp3 files will be returned in order, using the filename as the chapter title.
